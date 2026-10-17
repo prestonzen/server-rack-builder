@@ -1,12 +1,7 @@
 {
-  // Static site served by a Cloudflare Worker (assets only, no server code).
-  "$schema": "node_modules/wrangler/config-schema.json",
+  // Cloudflare Pages project: static site, no server code.
+  // Custom domain (rackbuilder.privatecomputesystems.com) is added in the Pages dashboard under Custom domains.
   "name": "server-rack-builder",
-  "compatibility_date": "2025-09-01",
-  "assets": {
-    "directory": "./public"
-  },
-  "routes": [
-    { "pattern": "rackbuilder.privatecomputesystems.com", "custom_domain": true }
-  ]
+  "pages_build_output_dir": "./public",
+  "compatibility_date": "2025-09-01"
 }

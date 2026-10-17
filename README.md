@@ -38,16 +38,21 @@ npm test
 npm run dev        # build + wrangler dev
 ```
 
-## Deploy (Cloudflare Workers)
+## Deploy (Cloudflare Pages)
 
-The custom domain `rackbuilder.privatecomputesystems.com` is declared in `wrangler.jsonc`, so the first deploy creates the DNS record and certificate, as long as `privatecomputesystems.com` is a zone in the same Cloudflare account.
+The repo is connected to a Cloudflare Pages project named `server-rack-builder`. Every push to `main` deploys.
 
-**Connect the repo (recommended):** Cloudflare dashboard → Workers & Pages → Create → Import a repository → pick this repo.
+Pages build settings:
 
+- Framework preset: None
 - Build command: `npm run build`
-- Deploy command: `npx wrangler deploy`
+- Build output directory: `public` (also set in `wrangler.jsonc`)
 
-**Or deploy from your machine:**
+Do not use `wrangler deploy` as a Pages build command; that is the Workers command and fails in a Pages build.
+
+Custom domain: Pages project → Custom domains → add `rackbuilder.privatecomputesystems.com`. If `privatecomputesystems.com` is a zone in the same Cloudflare account, the DNS record is created for you.
+
+Deploy from your machine instead:
 
 ```sh
 npx wrangler login
