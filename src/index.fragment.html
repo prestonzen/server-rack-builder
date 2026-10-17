@@ -1,0 +1,283 @@
+<title>Server Rack Builder</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Turn your plywood stock and server list into a quiet rolling cabinet, a numbered cut plan and an exploded 3D model.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: workshop sheet. Viewer and cut plan in the main column, stock editors in a side column on wide screens, stacked below on phones. */
+:root {
+  --bg: #eceff2; --surface: #f8f9fb; --ink: #17202a; --muted: #56616d; --line: #cdd4db; --line-soft: #dde2e7;
+  --accent: #2a56c6; --accent-ink: #ffffff; --accent-soft: #e2e9fa;
+  --stage: #dde2e7; --chip: #ffffff;
+  --sheet: #ecdcc1; --piece: #d7b586; --piece-ink: #3a2913; --cut: #c2410c; --hatch: #c9b08a;
+  --warn: #9a4510; --warn-bg: #fbefe4; --err: #b42318; --err-bg: #fdecea; --info: #234a9e; --info-bg: #e6ecf8;
+  --nail: #b42318;
+  --f-display: 'Archivo', 'Arial Narrow', system-ui, sans-serif;
+  --f-body: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e1318; --surface: #151c23; --ink: #e3e8ee; --muted: #97a3b0; --line: #2b3540; --line-soft: #222b34;
+  --accent: #88a7ff; --accent-ink: #0b1020; --accent-soft: #1b2643;
+  --stage: #19212a; --chip: #1f2831;
+  --sheet: #4a3c29; --piece: #876941; --piece-ink: #fff3e0; --cut: #ff9a5a; --hatch: #6b583d;
+  --warn: #f3a866; --warn-bg: #2c2015; --err: #ff8c80; --err-bg: #301816; --info: #a9c0ff; --info-bg: #182340;
+  --nail: #ff8c80; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e1318; --surface: #151c23; --ink: #e3e8ee; --muted: #97a3b0; --line: #2b3540; --line-soft: #222b34;
+  --accent: #88a7ff; --accent-ink: #0b1020; --accent-soft: #1b2643;
+  --stage: #19212a; --chip: #1f2831;
+  --sheet: #4a3c29; --piece: #876941; --piece-ink: #fff3e0; --cut: #ff9a5a; --hatch: #6b583d;
+  --warn: #f3a866; --warn-bg: #2c2015; --err: #ff8c80; --err-bg: #301816; --info: #a9c0ff; --info-bg: #182340;
+  --nail: #ff8c80; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--f-body); margin: 0; }
+.app { max-width: 1320px; margin: 0 auto; padding-block: 20px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 20px; }
+h1, h2, h3, h4 { font-family: var(--f-display); font-stretch: 85%; letter-spacing: -0.01em; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(28px, 4.2vw, 40px); font-weight: 750; line-height: 1.05; }
+h2 { font-size: 22px; font-weight: 700; }
+h3 { font-size: 17px; font-weight: 650; }
+h4 { font-size: 14px; font-weight: 650; }
+p { margin: 0; }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.eyebrow { font: 500 11px/1 var(--f-mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
+button, select, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* header */
+.top { display: grid; gap: 16px; }
+.brand { display: grid; gap: 6px; max-width: 62ch; }
+.brand p { color: var(--muted); }
+.brand a { color: var(--accent); }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+.stat { padding: 12px 14px; display: grid; gap: 2px; min-width: 0; border-left: 1px solid var(--line-soft); }
+.stat:first-child { border-left: 0; }
+.stat .k { font: 500 11px/1.2 var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.stat .v { font-size: 18px; font-weight: 500; overflow-wrap: anywhere; }
+.stat .u { font-size: 12px; color: var(--muted); }
+
+/* layout */
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 20px; align-items: start; }
+.main { display: grid; gap: 20px; min-width: 0; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.panel > header { display: grid; gap: 4px; }
+.panel > header p { color: var(--muted); max-width: 65ch; }
+
+/* viewer */
+.viewer { padding: 0; overflow: hidden; gap: 0; }
+.stage { position: relative; height: clamp(320px, 60vh, 620px); background: var(--stage); touch-action: none; }
+.stage canvas { width: 100%; height: 100%; display: block; cursor: grab; }
+.stage canvas:active { cursor: grabbing; }
+.overlay { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.chip3d.behind { opacity: 0.35; }
+.chip3d { transition: opacity .15s; position: absolute; left: 0; top: 0; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 12px; background: var(--chip); border: 1px solid var(--line); color: var(--ink); font: 600 12px/22px var(--f-mono); text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.18); }
+.stage-hint { position: absolute; left: 12px; bottom: 10px; font-size: 12px; color: var(--muted); pointer-events: none; }
+.reset-view { position: absolute; top: 10px; right: 10px; height: 36px; padding: 0 12px; border-radius: 18px; border: 1px solid var(--line); background: var(--chip); font-size: 13px; }
+.controls { display: grid; gap: 16px; padding: 16px 18px; border-top: 1px solid var(--line); }
+.seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 4px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; gap: 4px; }
+.seg button { height: 42px; border: 0; border-radius: 9px; background: transparent; font-weight: 500; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.slider { display: grid; grid-template-columns: auto minmax(0, 1fr) 48px; align-items: center; gap: 14px; }
+.slider span { font-size: 14px; font-weight: 500; }
+.slider input { width: 100%; accent-color: var(--accent); height: 28px; }
+.slider output { text-align: right; color: var(--muted); }
+.toggles { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.toggles .lbl { font-size: 13px; color: var(--muted); margin-right: 2px; }
+.toggles button { height: 38px; padding: 0 16px; border-radius: 19px; border: 1px solid var(--line); background: transparent; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; }
+.toggles button::before { content: ""; width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid var(--muted); }
+.toggles button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
+.toggles button[aria-pressed="true"]::before { background: var(--accent); border-color: var(--accent); }
+.pick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 14px 18px; border-top: 1px solid var(--line); min-height: 54px; }
+.pick-empty { color: var(--muted); font-size: 14px; }
+.pick-name { font-weight: 600; }
+.pick-size { color: var(--ink); }
+.pick-meta { color: var(--muted); font-size: 13px; flex-basis: 100%; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 12px 18px 16px; border-top: 1px solid var(--line-soft); font-size: 13px; color: var(--muted); }
+.lg-item { display: inline-flex; align-items: center; gap: 7px; }
+.swatch { width: 14px; height: 14px; border-radius: 4px; background: var(--sw); border: 1px solid rgba(0,0,0,0.25); display: inline-block; flex: none; }
+.lchip { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 11px; border: 1px solid var(--line); background: var(--chip); font: 600 12px/1 var(--f-mono); margin-right: 6px; }
+
+/* notes */
+.notes { display: grid; gap: 8px; }
+.note { padding: 10px 14px; border-radius: 10px; font-size: 14px; border: 1px solid transparent; }
+.note-warn { background: var(--warn-bg); color: var(--warn); border-color: color-mix(in srgb, var(--warn) 30%, transparent); }
+.note-error { background: var(--err-bg); color: var(--err); border-color: color-mix(in srgb, var(--err) 30%, transparent); }
+.note-info { background: var(--info-bg); color: var(--info); border-color: color-mix(in srgb, var(--info) 25%, transparent); }
+
+/* cut plan */
+.sheets { display: grid; gap: 18px; }
+.sheet-card { display: grid; gap: 10px; min-width: 0; }
+.sheet-card > header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
+.sheet-card .muted { font-size: 13px; }
+.svgwrap { overflow-x: auto; }
+.svgwrap svg { width: 100%; min-width: 300px; height: auto; display: block; }
+svg .sheet { fill: var(--sheet); }
+svg .offcut { opacity: 0.9; }
+svg .hatch-l { stroke: var(--hatch); stroke-width: 6; }
+svg .pc { fill: var(--piece); stroke: var(--piece-ink); stroke-opacity: 0.45; stroke-width: 3; }
+svg .pc-t { fill: var(--piece-ink); font-family: var(--f-body); font-weight: 600; }
+svg .pc-d { fill: var(--piece-ink); font-family: var(--f-mono); opacity: 0.85; }
+svg .cut { stroke: var(--cut); stroke-width: 4; stroke-dasharray: 18 10; }
+svg .cut-dot { fill: var(--cut); }
+svg .cut-n { fill: #fff; font-family: var(--f-mono); font-weight: 600; }
+svg .sheet-edge { fill: none; stroke: var(--ink); stroke-opacity: 0.45; stroke-width: 3; }
+.cut-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14px; }
+.cut-steps li { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 8px; align-items: start; }
+.cut-badge { width: 22px; height: 22px; border-radius: 50%; background: var(--cut); color: #fff; font: 600 12px/22px var(--f-mono); text-align: center; margin-top: 1px; }
+.boards { display: grid; gap: 14px; }
+.board-group { display: grid; gap: 6px; }
+.board-group h4 .muted { font-weight: 400; font-size: 12px; margin-left: 6px; }
+.board { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 8px; align-items: center; }
+.board-n { font-size: 12px; color: var(--muted); text-align: right; }
+.bar { position: relative; height: 30px; background: repeating-linear-gradient(45deg, var(--sheet), var(--sheet) 6px, var(--bg) 6px, var(--bg) 12px); border-radius: 6px; border: 1px solid var(--line); overflow: hidden; }
+.board.nailed .bar { border-color: var(--nail); }
+.seg-c { position: absolute; top: 0; bottom: 0; background: var(--piece); color: var(--piece-ink); border-right: 2px solid var(--cut); font: 500 11px/28px var(--f-mono); padding-left: 5px; white-space: nowrap; overflow: hidden; }
+.seg-c b { font-weight: 700; }
+
+/* parts */
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th { text-align: left; font: 500 11px/1.2 var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 9px 10px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+td.mono { white-space: nowrap; }
+.letter-key { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13px; color: var(--muted); }
+
+/* inputs */
+.inputs { position: sticky; top: max(16px, env(safe-area-inset-top, 0px)); max-height: calc(100vh - 32px); overflow-y: auto; }
+.inputs section { display: grid; gap: 10px; }
+.inputs section + section { border-top: 1px solid var(--line-soft); padding-top: 16px; }
+.row-card { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--line-soft); border-radius: 10px; background: var(--bg); }
+.row-head { display: grid; grid-template-columns: minmax(0, 1fr) 36px; gap: 8px; align-items: end; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.settings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.fld { display: grid; gap: 3px; min-width: 0; }
+.fld > span { font-size: 12px; color: var(--muted); }
+.fld small { font-size: 11px; color: var(--muted); line-height: 1.3; }
+.fld input, .fld select { width: 100%; height: 38px; padding: 0 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-family: var(--f-mono); font-size: 14px; font-variant-numeric: tabular-nums; }
+.fld input[type="text"] { font-family: var(--f-body); }
+.icon-btn { width: 36px; height: 38px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-size: 20px; line-height: 1; color: var(--muted); }
+.add-btn, .btn { height: 38px; padding: 0 14px; border: 1px dashed var(--line); border-radius: 8px; background: transparent; font-size: 14px; justify-self: start; }
+.btn { border-style: solid; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.sec-head p { font-size: 13px; color: var(--muted); }
+textarea#cfgOut { width: 100%; min-height: 140px; font: 12px/1.4 var(--f-mono); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+footer.foot { font-size: 13px; color: var(--muted); }
+
+@media (max-width: 980px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .inputs { position: static; max-height: none; overflow: visible; }
+}
+@media (max-width: 640px) {
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat:nth-child(3) { border-left: 0; }
+  .stat:nth-child(n+3) { border-top: 1px solid var(--line-soft); }
+  .panel { padding: 14px; }
+  .controls { padding: 14px; }
+  .slider { grid-template-columns: auto minmax(0, 1fr) 44px; gap: 10px; }
+  .stage { height: clamp(300px, 52vh, 460px); }
+  .stat .v { font-size: 16px; }
+}
+@media (max-width: 380px) {
+  .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <span class="eyebrow">Plywood · 19-inch gear · quiet cabinet</span>
+      <h1>Server Rack Builder</h1>
+      <p>Enter the plywood you have and the gear going in. It sizes a lined, rolling cabinet, plans every saw cut, and shows it all in an exploded 3D model. <a href="#inputs">Edit your stock</a></p>
+    </div>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <div class="layout">
+    <main class="main">
+      <section class="panel viewer" aria-label="3D model">
+        <div class="stage">
+          <canvas id="cv" aria-label="3D model of the cabinet. Drag to rotate, pinch or scroll to zoom, tap a part for details."></canvas>
+          <div id="overlay" class="overlay"></div>
+          <button id="resetView" class="reset-view" type="button">Reset view</button>
+          <span class="stage-hint">Drag to rotate · pinch to zoom · tap a part</span>
+        </div>
+        <div class="controls">
+          <div class="seg" role="group" aria-label="View">
+            <button type="button" data-mode="assembled" aria-pressed="true">Assembled</button>
+            <button type="button" data-mode="exploded" aria-pressed="false">Exploded</button>
+            <button type="button" data-mode="cutaway" aria-pressed="false">Cutaway</button>
+          </div>
+          <label class="slider" for="exr"><span>Explode</span><input id="exr" type="range" min="0" max="100" step="1" value="0"><output id="exo" class="mono" for="exr">0%</output></label>
+          <div class="toggles" role="group" aria-label="Show layers">
+            <span class="lbl">Show</span>
+            <button type="button" data-layer="lining" aria-pressed="true">Lining</button>
+            <button type="button" data-layer="devices" aria-pressed="true">Devices</button>
+            <button type="button" data-layer="labels" aria-pressed="true">Labels</button>
+          </div>
+        </div>
+        <div class="pick" id="pick" aria-live="polite"><span class="pick-empty">Tap any part to see its size and where it comes from.</span></div>
+        <div class="legend" id="legend"></div>
+      </section>
+
+      <section class="notes" id="warnings" hidden></section>
+
+      <section class="panel" aria-labelledby="cutplan-h">
+        <header>
+          <h2 id="cutplan-h">Cut plan</h2>
+          <p>Make the cuts in number order. Each cut runs edge to edge across the piece it splits, so a circular saw handles all of them. Positions already allow for the saw kerf.</p>
+        </header>
+        <div class="sheets" id="sheets"></div>
+        <h3>Planks</h3>
+        <div class="boards" id="boards"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="parts-h">
+        <header><h2 id="parts-h">Parts</h2></header>
+        <div class="tablewrap"><table id="parts"></table></div>
+        <div class="letter-key" id="letterKey"></div>
+      </section>
+    </main>
+
+    <aside class="panel inputs" id="inputs" aria-labelledby="inputs-h">
+      <header><h2 id="inputs-h">Your stock</h2><p>Sizes in millimetres. Changes update the model and cut plan as you type.</p></header>
+      <section>
+        <div class="sec-head"><h3>Plywood sheets</h3></div>
+        <div id="sheetsEd" class="ed"></div>
+        <button type="button" class="add-btn" data-add="sheets">+ Add sheet</button>
+      </section>
+      <section>
+        <div class="sec-head"><h3>Planks</h3><p>Nailed ones are used last</p></div>
+        <div id="boardsEd" class="ed"></div>
+        <button type="button" class="add-btn" data-add="boards">+ Add plank size</button>
+      </section>
+      <section>
+        <div class="sec-head"><h3>Devices</h3><p>Same level = stacked</p></div>
+        <div id="devicesEd" class="ed"></div>
+        <button type="button" class="add-btn" data-add="devices">+ Add device</button>
+      </section>
+      <section>
+        <div class="sec-head"><h3>Build settings</h3></div>
+        <div id="settingsEd" class="settings"></div>
+      </section>
+      <section>
+        <div class="btn-row">
+          <button type="button" class="btn" id="copyConfig">Copy settings</button>
+          <button type="button" class="btn" id="resetDefaults">Reset to my stock</button>
+        </div>
+        <textarea id="cfgOut" hidden readonly aria-label="Settings as JSON"></textarea>
+      </section>
+    </aside>
+  </div>
+  <footer class="foot">Rack units are 44.45 mm. Device width is the chassis body, not the rack ears.</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script type="module" src="app.js"></script>

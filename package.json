@@ -1,0 +1,17 @@
+{
+  "name": "server-rack-builder",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Plan a quiet plywood server cabinet from the stock you have: dimensions, numbered cut plan and exploded 3D model.",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test test/*.test.mjs",
+    "dev": "npm run build && npx wrangler dev",
+    "deploy": "npm run build && npx wrangler deploy"
+  },
+  "devDependencies": {
+    "three": "^0.128.0",
+    "wrangler": "^4.0.0"
+  }
+}
